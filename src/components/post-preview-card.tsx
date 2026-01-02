@@ -1,0 +1,123 @@
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Textarea } from './ui/textarea';
+import { Button } from './ui/button';
+import { Calendar as CalendarIcon, Copy, Facebook, Twitter, Wand2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { Skeleton } from './ui/skeleton';
+import { optimizeForPlatform } from '@/ai/flows/optimize-for-platform';
+import { cn } from '@/lib/utils';
+
+
+type Platform = 'facebook' | 'x';
+
+interface PostPreviewCardProps {
+  platform: Platform;
+  content: string;
+}
+
+function PlatformIcon({ platform }: { platform: Platform }) {
+    if (platform === 'facebook') {
+        return <Facebook className="h-6 w-6 text-blue-500" />;
+    }
+    return <Twitter className="h-6 w-6 text-sky-500" />;
+}
+
+export function PostPreviewCard({ platform, content: initialContent }: PostPreviewCardProps) {
+  const [content, setContent] = useState(initialContent);
+  const { toast } = useToast();
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    toast({ title: 'Copied to clipboard!' });
+  };
+  
+  const handleSuggestHashtags = async () => {
+    try {
+        const result = await optimizeForPlatform({ content, platform: 'x' });
+        const hashtags = result.optimizedContent.match(/#\w+/g);
+        if (hashtags) {
+            setContent(currentContent => `${currentContent}\n\n${hashtags.join(' ')}`);
+            toast({ title: 'Hashtags added!' });
+        } else {
+            toast({ title: 'No hashtags found', description: 'Could not extract hashtags from the optimized content.' });
+        }
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Could not suggest hashtags' });
+    }
+  }
+
+  const platformTitle = platform.charAt(0).toUpperCase() + platform.slice(1);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <PlatformIcon platform={platform} />
+          <div>
+            <CardTitle>{platformTitle} Post</CardTitle>
+            <CardDescription>Preview of the generated post.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="min-h-[150px] text-base"
+        />
+      </CardContent>
+      <CardFooter className="flex-wrap justify-end gap-2">
+        <Button variant="outline" onClick={handleSuggestHashtags}>
+            <Wand2 className="mr-2 h-4 w-4" />
+            Suggest Hashtags
+        </Button>
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="outline">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Schedule
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+                <Calendar mode="single" initialFocus />
+            </PopoverContent>
+        </Popover>
+        <Button onClick={handleCopy}>
+          <Copy className="mr-2 h-4 w-4" />
+          Copy Post
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+
+PostPreviewCard.Skeleton = function PostPreviewCardSkeleton({platform}: {platform: Platform}) {
+  const platformTitle = platform.charAt(0).toUpperCase() + platform.slice(1);
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <Skeleton className={cn("h-6 w-6 rounded-full", platform === 'facebook' ? 'bg-blue-500/50' : 'bg-sky-500/50')} />
+          <div>
+            <CardTitle>{platformTitle} Post</CardTitle>
+            <CardDescription>Generating post preview...</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-[150px] w-full" />
+      </CardContent>
+      <CardFooter className="justify-end gap-2">
+        <Skeleton className="h-10 w-36" />
+        <Skeleton className="h-10 w-28" />
+        <Skeleton className="h-10 w-32" />
+      </CardFooter>
+    </Card>
+  )
+}

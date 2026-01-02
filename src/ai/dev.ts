@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/adjust-post-tone.ts';
+import '@/ai/flows/generate-social-media-post.ts';
+import '@/ai/flows/optimize-for-platform.ts';
