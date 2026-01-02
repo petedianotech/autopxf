@@ -19,8 +19,8 @@ const GenerateSocialMediaPostInputSchema = z.object({
 export type GenerateSocialMediaPostInput = z.infer<typeof GenerateSocialMediaPostInputSchema>;
 
 const GenerateSocialMediaPostOutputSchema = z.object({
-  facebookPost: z.string().optional().describe('The generated Facebook post.'),
-  xPost: z.string().optional().describe('The generated X (Twitter) post.'),
+  facebookPost: z.string().optional().describe('The generated Facebook post. Only include if platform is "facebook" or "both".'),
+  xPost: z.string().optional().describe('The generated X (Twitter) post. Only include if platform is "x" or "both".'),
 });
 export type GenerateSocialMediaPostOutput = z.infer<typeof GenerateSocialMediaPostOutputSchema>;
 
@@ -32,23 +32,21 @@ const generateSocialMediaPostPrompt = ai.definePrompt({
   name: 'generateSocialMediaPostPrompt',
   input: {schema: GenerateSocialMediaPostInputSchema},
   output: {schema: GenerateSocialMediaPostOutputSchema},
-  prompt: `You are an expert social media manager. Generate engaging social media posts based on the topic, platform, and tone provided.
+  prompt: `You are an expert social media manager. Generate one or more engaging social media posts based on the provided topic, platform, and tone.
 
 Topic: {{{topic}}}
-Platform: {{{platform}}}
+{{#if tone}}
 Tone: {{{tone}}}
+{{/if}}
 
-{{#eq platform "facebook"}}
-Facebook Post:
-{{/eq}}
-{{#eq platform "x"}}
-X (Twitter) Post:
-{{/eq}}
-{{#eq platform "both"}}
-Facebook Post:
+Your task is to generate content for the following platform(s): {{{platform}}}.
 
-X (Twitter) Post:
-{{/eq}}`,
+- If the platform is 'facebook', create a Facebook post.
+- If the platform is 'x', create an X (formerly Twitter) post.
+- If the platform is 'both', create both a Facebook and an X post.
+
+Please adhere to the specific platform conventions. For X, be concise and use relevant hashtags. For Facebook, you can be more detailed.
+`,
 });
 
 const generateSocialMediaPostFlow = ai.defineFlow(
