@@ -13,7 +13,7 @@ const pageTitles: { [key: string]: string } = {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'autopxf';
+  const title = pageTitles[pathname] || 'autopx';
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm lg:h-[60px] lg:px-6">

@@ -38,7 +38,7 @@ export function SidebarNav() {
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center gap-2">
             <Bot className="w-8 h-8 text-primary" />
-            <span className="text-lg font-semibold text-foreground">autopxf</span>
+            <span className="text-lg font-semibold text-foreground">autopx</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
