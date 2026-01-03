@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { postToX } from '@/ai/flows/post-to-x';
 import { postToFacebook } from '@/ai/flows/post-to-facebook';
 import { generateUniversalPost } from '@/ai/flows/generate-universal-post';
+import { generateAudio } from '@/ai/flows/generate-audio';
 
 export async function handleGeneratePost(values: z.infer<typeof createPostSchema>) {
   const validatedFields = createPostSchema.safeParse(values);
@@ -76,5 +77,23 @@ export async function handleGenerateUniversalPost(values: z.infer<typeof univers
     } catch (error) {
       console.error('Error generating universal post:', error);
       throw new Error('Failed to generate universal post with AI.');
+    }
+}
+
+const audioSchema = z.string();
+
+export async function handleGenerateAudio(script: string) {
+    const validatedFields = audioSchema.safeParse(script);
+
+    if (!validatedFields.success) {
+        throw new Error('Invalid script for audio generation.');
+    }
+
+    try {
+        const result = await generateAudio(validatedFields.data);
+        return result;
+    } catch (error) {
+        console.error('Error generating audio:', error);
+        throw new Error('Failed to generate audio with AI.');
     }
 }

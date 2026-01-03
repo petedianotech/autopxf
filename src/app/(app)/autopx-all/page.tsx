@@ -16,8 +16,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles } from 'lucide-react';
-import { handleGenerateUniversalPost } from '@/lib/actions';
+import { Loader2, Sparkles, Volume2 } from 'lucide-react';
+import { handleGenerateUniversalPost, handleGenerateAudio } from '@/lib/actions';
 import type { GenerateUniversalPostOutput } from '@/ai/flows/generate-universal-post';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,10 +32,21 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface GeneratedContentState extends GenerateUniversalPostOutput {
+  shortFormScriptAudio?: string;
+  longFormScriptAudio?: string;
+}
+
+interface AudioGenerationState {
+  short?: 'loading' | 'loaded' | 'error';
+  long?: 'loading' | 'loaded' | 'error';
+}
+
 export default function AutopxAllPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<GenerateUniversalPostOutput | null>(null);
+  const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [audioState, setAudioState] = useState<AudioGenerationState>({});
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContentState | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -44,9 +55,10 @@ export default function AutopxAllPage() {
     },
   });
 
-  async function onSubmit(values: FormValues) {
-    setIsLoading(true);
+  async function onTextSubmit(values: FormValues) {
+    setIsGeneratingText(true);
     setGeneratedContent(null);
+    setAudioState({});
     try {
       const result = await handleGenerateUniversalPost(values);
       if (result) {
@@ -65,9 +77,34 @@ export default function AutopxAllPage() {
         description: error instanceof Error ? error.message : 'Please try again.',
       });
     } finally {
-      setIsLoading(false);
+      setIsGeneratingText(false);
     }
   }
+
+  async function onAudioGenerate(script: string, type: 'short' | 'long') {
+    setAudioState(prev => ({...prev, [type]: 'loading' }));
+    try {
+        const result = await handleGenerateAudio(script);
+        if (result?.media) {
+            setGeneratedContent(prev => prev ? {
+                ...prev,
+                [type === 'short' ? 'shortFormScriptAudio' : 'longFormScriptAudio']: result.media,
+            } : null);
+            setAudioState(prev => ({...prev, [type]: 'loaded' }));
+            toast({ title: 'Audio Generated!', description: `Your ${type}-form audio is ready.` });
+        } else {
+            throw new Error('AI did not return valid audio.');
+        }
+    } catch (error) {
+        setAudioState(prev => ({...prev, [type]: 'error' }));
+        toast({
+            variant: 'destructive',
+            title: 'Audio Generation Failed',
+            description: error instanceof Error ? error.message : 'Please try again.',
+        });
+    }
+  }
+
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
@@ -78,7 +115,7 @@ export default function AutopxAllPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onTextSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="topic"
@@ -96,8 +133,8 @@ export default function AutopxAllPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
+                <Button type="submit" className="w-full" disabled={isGeneratingText}>
+                  {isGeneratingText ? (
                     <Loader2 className="animate-spin" />
                   ) : (
                     <Sparkles className="mr-2 h-4 w-4" />
@@ -110,7 +147,7 @@ export default function AutopxAllPage() {
         </Card>
       </div>
       <div className="space-y-6 md:col-span-2">
-        {isLoading && (
+        {isGeneratingText && (
             <Card>
                 <CardContent className="p-6">
                     <div className="space-y-4">
@@ -129,20 +166,37 @@ export default function AutopxAllPage() {
                 {generatedContent.titles.map((title, i) => <Badge key={i} variant="secondary">{title}</Badge>)}
               </CardContent>
             </Card>
+            
             <Card>
               <CardHeader><CardTitle>Short-Form Script (30-60s)</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <audio controls src={generatedContent.shortFormScriptAudio} className="w-full" />
+                {generatedContent.shortFormScriptAudio && audioState.short === 'loaded' ? (
+                  <audio controls src={generatedContent.shortFormScriptAudio} className="w-full" />
+                ) : (
+                  <Button onClick={() => onAudioGenerate(generatedContent.shortFormScript, 'short')} disabled={audioState.short === 'loading'} className='w-full'>
+                    {audioState.short === 'loading' ? <Loader2 className="animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}
+                    Generate Audio
+                  </Button>
+                )}
                 <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">{generatedContent.shortFormScript}</div>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader><CardTitle>Long-Form Script (2-4 mins)</CardTitle></CardHeader>
                <CardContent className="space-y-4">
-                <audio controls src={generatedContent.longFormScriptAudio} className="w-full" />
+               {generatedContent.longFormScriptAudio && audioState.long === 'loaded' ? (
+                  <audio controls src={generatedContent.longFormScriptAudio} className="w-full" />
+                ) : (
+                  <Button onClick={() => onAudioGenerate(generatedContent.longFormScript, 'long')} disabled={audioState.long === 'loading'} className='w-full'>
+                    {audioState.long === 'loading' ? <Loader2 className="animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}
+                    Generate Audio
+                  </Button>
+                )}
                 <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">{generatedContent.longFormScript}</div>
               </CardContent>
             </Card>
+
              <Card>
               <CardHeader><CardTitle>On-Screen Captions</CardTitle></CardHeader>
               <CardContent className="prose prose-sm dark:prose-invert">
@@ -158,7 +212,7 @@ export default function AutopxAllPage() {
             </div>
           </ScrollArea>
         )}
-        {!isLoading && !generatedContent && (
+        {!isGeneratingText && !generatedContent && (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed h-full min-h-[400px] text-center p-8">
                 <Sparkles className="h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-semibold">Your content package will appear here</h3>
