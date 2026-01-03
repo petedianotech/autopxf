@@ -21,6 +21,8 @@ import { handleGenerateUniversalPost, handleGenerateAudio } from '@/lib/actions'
 import type { GenerateUniversalPostOutput } from '@/ai/flows/generate-universal-post';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   topic: z.string().min(5, {
@@ -28,6 +30,7 @@ const formSchema = z.object({
   }).max(150, {
     message: 'Topic must be at most 150 characters long.',
   }),
+  includeLongForm: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,6 +55,7 @@ export default function AutopxAllPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       topic: '',
+      includeLongForm: true,
     },
   });
 
@@ -133,6 +137,25 @@ export default function AutopxAllPage() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="includeLongForm"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Include long-form script (2-4 mins)
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" className="w-full" disabled={isGeneratingText}>
                   {isGeneratingText ? (
                     <Loader2 className="animate-spin" />
@@ -166,6 +189,13 @@ export default function AutopxAllPage() {
                 {generatedContent.titles.map((title, i) => <Badge key={i} variant="secondary">{title}</Badge>)}
               </CardContent>
             </Card>
+
+             <Card>
+              <CardHeader><CardTitle>Hashtags</CardTitle></CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {generatedContent.hashtags.map((tag, i) => <Badge key={i} variant="outline">{tag}</Badge>)}
+              </CardContent>
+            </Card>
             
             <Card>
               <CardHeader><CardTitle>Short-Form Script (30-60s)</CardTitle></CardHeader>
@@ -182,20 +212,22 @@ export default function AutopxAllPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader><CardTitle>Long-Form Script (2-4 mins)</CardTitle></CardHeader>
-               <CardContent className="space-y-4">
-               {generatedContent.longFormScriptAudio && audioState.long === 'loaded' ? (
-                  <audio controls src={generatedContent.longFormScriptAudio} className="w-full" />
-                ) : (
-                  <Button onClick={() => onAudioGenerate(generatedContent.longFormScript, 'long')} disabled={audioState.long === 'loading'} className='w-full'>
-                    {audioState.long === 'loading' ? <Loader2 className="animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}
-                    Generate Audio
-                  </Button>
-                )}
-                <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">{generatedContent.longFormScript}</div>
-              </CardContent>
-            </Card>
+            {generatedContent.longFormScript && (
+              <Card>
+                <CardHeader><CardTitle>Long-Form Script (2-4 mins)</CardTitle></CardHeader>
+                 <CardContent className="space-y-4">
+                 {generatedContent.longFormScriptAudio && audioState.long === 'loaded' ? (
+                    <audio controls src={generatedContent.longFormScriptAudio} className="w-full" />
+                  ) : (
+                    <Button onClick={() => onAudioGenerate(generatedContent.longFormScript!, 'long')} disabled={audioState.long === 'loading'} className='w-full'>
+                      {audioState.long === 'loading' ? <Loader2 className="animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}
+                      Generate Audio
+                    </Button>
+                  )}
+                  <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">{generatedContent.longFormScript}</div>
+                </CardContent>
+              </Card>
+            )}
 
              <Card>
               <CardHeader><CardTitle>On-Screen Captions</CardTitle></CardHeader>

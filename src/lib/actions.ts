@@ -62,6 +62,7 @@ export async function handlePostToFacebook(content: string) {
 
 const universalPostSchema = z.object({
     topic: z.string(),
+    includeLongForm: z.boolean(),
 });
 
 export async function handleGenerateUniversalPost(values: z.infer<typeof universalPostSchema>) {

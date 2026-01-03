@@ -12,13 +12,15 @@ import {z} from 'genkit';
 
 const GenerateUniversalPostInputSchema = z.object({
   topic: z.string().describe('The topic for the content package.'),
+  includeLongForm: z.boolean().describe('Whether to include the long-form script (2-4 minutes).').default(true),
 });
 export type GenerateUniversalPostInput = z.infer<typeof GenerateUniversalPostInputSchema>;
 
 const GenerateUniversalPostOutputSchema = z.object({
-    titles: z.array(z.string()).describe('5-10 virality-optimized titles.'),
+    titles: z.array(z.string()).describe('2-3 virality-optimized titles.'),
+    hashtags: z.array(z.string()).describe('4-5 relevant hashtags, including #peterdamianoHQ.'),
     shortFormScript: z.string().describe('A 30-60 second script for short-form video.'),
-    longFormScript: z.string().describe('A 2-4 minute script for long-form video.'),
+    longFormScript: z.string().optional().describe('A 2-4 minute script for long-form video. Only include if requested.'),
     onScreenCaptions: z.array(z.string()).describe('Sentence-based on-screen captions appearing every 2-3 seconds.'),
     postDescription: z.string().describe('A post description with a summary, depth signal, and continuation cue.'),
 });
@@ -60,6 +62,7 @@ The first sentence must:
 - Never say “Did you know”
 - Never say “In this video”
 
+
 Approved Hook Patterns:
 - “Most people misunderstand how AI actually works.”
 - “AI doesn’t replace jobs. It replaces a specific behavior.”
@@ -72,15 +75,18 @@ Content Structure (Short-Form: 30–60s)
 4. Practical Takeaway (last 10s): Something the viewer can apply immediately.
 No fluff. No storytelling. No hype.
 
+{{#if includeLongForm}}
 Long-Form Content (2–4 minutes)
 Must:
 - Expand the same core idea
 - Add one additional framework or example
 - Be suitable for Patreon or book chapters
 - Avoid platform-specific slang
+{{/if}}
 
 Titles (Virality-Optimized)
-Generate 5–10 titles per topic.
+Generate 2-3 titles per topic.
+
 Rules:
 - ≤ 60 characters
 - No emojis
@@ -91,6 +97,9 @@ Examples:
 - “Why Most AI Advice Is Incomplete”
 - “The Real Function of AI Tools”
 - “A Better Way to Think About Automation”
+
+Hashtags
+Generate 4-5 relevant hashtags. One of these MUST be #peterdamianoHQ.
 
 Captions (Retention-Driven)
 On-screen captions must:
