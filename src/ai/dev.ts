@@ -8,3 +8,4 @@ import '@/ai/flows/post-to-x.ts';
 import '@/ai/flows/post-to-facebook.ts';
 import '@/ai/flows/generate-universal-post.ts';
 import '@/ai/flows/generate-audio.ts';
+import '@/ai/flows/generate-post-titles.ts';

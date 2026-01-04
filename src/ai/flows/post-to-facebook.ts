@@ -45,27 +45,25 @@ const postToFacebookFlow = ai.defineFlow(
     }
 
     const url = `https://graph.facebook.com/${pageId}/feed`;
-
+    
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: input.text,
-                access_token: accessToken,
-            }),
-        });
+      const formData = new URLSearchParams();
+      formData.append('message', input.text);
+      formData.append('access_token', accessToken);
 
-        const result = await response.json();
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!response.ok) {
-            const errorDetails = result.error ? `Code: ${result.error.code}, Message: ${result.error.message}` : `Status: ${response.status}, Body: ${JSON.stringify(result)}`;
-            const error = `Failed to post to Facebook. ${errorDetails}`;
-            console.error(error);
-            return { success: false, error };
-        }
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorDetails = result.error ? `Code: ${result.error.code}, Type: ${result.error.type}, Message: ${result.error.message}` : `Status: ${response.status}, Body: ${JSON.stringify(result)}`;
+        const error = `Failed to post to Facebook. ${errorDetails}`;
+        console.error(error);
+        return { success: false, error };
+      }
       
       console.log('Facebook post successful:', result.id);
       return {

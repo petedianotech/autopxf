@@ -7,6 +7,7 @@ import { postToX } from '@/ai/flows/post-to-x';
 import { postToFacebook } from '@/ai/flows/post-to-facebook';
 import { generateUniversalPost } from '@/ai/flows/generate-universal-post';
 import { generateAudio } from '@/ai/flows/generate-audio';
+import { generatePostTitles } from '@/ai/flows/generate-post-titles';
 
 export async function handleGeneratePost(values: z.infer<typeof createPostSchema>) {
   const validatedFields = createPostSchema.safeParse(values);
@@ -96,5 +97,26 @@ export async function handleGenerateAudio(script: string) {
     } catch (error) {
         console.error('Error generating audio:', error);
         throw new Error('Failed to generate audio with AI.');
+    }
+}
+
+const titleGenSchema = z.object({
+    postContent: z.string().min(1),
+    platform: z.enum(['facebook', 'x']),
+});
+
+export async function handleGenerateTitles(values: z.infer<typeof titleGenSchema>) {
+    const validatedFields = titleGenSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+        throw new Error('Invalid input for title generation.');
+    }
+
+    try {
+        const result = await generatePostTitles(validatedFields.data);
+        return result;
+    } catch (error) {
+        console.error('Error generating titles:', error);
+        throw new Error('Failed to generate titles with AI.');
     }
 }
