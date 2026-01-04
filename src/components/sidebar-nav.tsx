@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bot, Globe, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { Bot, Globe, PlusCircle } from 'lucide-react';
 import {
   SidebarHeader,
   SidebarContent,
@@ -10,14 +10,8 @@ import {
   SidebarMenuButton,
 } from './ui/sidebar';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 const links = [
-  {
-    href: '/dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-  },
   {
     href: '/create',
     label: 'Create Post',
@@ -36,7 +30,7 @@ export function SidebarNav() {
   return (
     <>
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/create" className="flex items-center gap-2">
             <Bot className="w-8 h-8 text-primary" />
             <span className="text-lg font-semibold text-foreground">autopx</span>
         </Link>
